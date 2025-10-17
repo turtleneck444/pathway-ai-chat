@@ -47,6 +47,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        neutral: {
+          900: "hsl(var(--neutral-900))",
+          800: "hsl(var(--neutral-800))",
+          700: "hsl(var(--neutral-700))",
+          500: "hsl(var(--neutral-500))",
+          400: "hsl(var(--neutral-400))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
