@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Bot, Check, ChevronDown, Paperclip } from "lucide-react";
+import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 interface UseAutoResizeTextareaProps {
     minHeight: number;
@@ -97,122 +96,93 @@ const OPENAI_ICON = (
     </>
 );
 
-interface Message {
-    role: 'user' | 'assistant';
-    content: string;
+interface AI_PromptProps {
+    mode: string;
+    modeColor: string;
 }
 
-export function AI_Prompt() {
+export function AI_Prompt({ mode, modeColor }: AI_PromptProps) {
     const [value, setValue] = useState("");
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
     const { textareaRef, adjustHeight } = useAutoResizeTextarea({
         minHeight: 72,
         maxHeight: 300,
     });
     const [selectedModel, setSelectedModel] = useState("gpt-5-mini-2025-08-07");
-    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
+    const [conversationHistory, setConversationHistory] = useState<Array<{role: string, content: string}>>([]);
 
     const AI_MODELS = [
-        "gpt-5-2025-08-07",
-        "gpt-5-mini-2025-08-07",
-        "gpt-5-nano-2025-08-07",
-        "gpt-4.1-2025-04-14",
+        { id: "gpt-5-2025-08-07", name: "GPT-5" },
+        { id: "gpt-5-mini-2025-08-07", name: "GPT-5 Mini" },
+        { id: "gpt-5-nano-2025-08-07", name: "GPT-5 Nano" },
+        { id: "o3-2025-04-16", name: "O3" },
+        { id: "o4-mini-2025-04-16", name: "O4 Mini" },
     ];
-
-    const MODEL_ICONS: Record<string, React.ReactNode> = {
-        "gpt-5-2025-08-07": OPENAI_ICON,
-        "gpt-5-mini-2025-08-07": OPENAI_ICON,
-        "gpt-5-nano-2025-08-07": OPENAI_ICON,
-        "gpt-4.1-2025-04-14": OPENAI_ICON,
-    };
 
     const handleSendMessage = async () => {
         if (!value.trim() || isLoading) return;
-
+        
         const userMessage = value.trim();
         setValue("");
         adjustHeight(true);
-
-        setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setIsLoading(true);
 
         try {
             const { data, error } = await supabase.functions.invoke('chat-with-ai', {
-                body: { 
+                body: {
                     message: userMessage,
                     model: selectedModel,
-                    conversationHistory: messages
+                    conversationHistory,
+                    mode
                 }
             });
 
             if (error) throw error;
 
-            if (data?.response) {
-                setMessages(prev => [...prev, { 
-                    role: 'assistant', 
-                    content: data.response 
-                }]);
-            }
+            setConversationHistory([
+                ...conversationHistory,
+                { role: 'user', content: userMessage },
+                { role: 'assistant', content: data.response }
+            ]);
         } catch (error) {
-            console.error('Error sending message:', error);
-            toast({
-                title: "Error",
-                description: "Failed to get response from AI. Please try again.",
-                variant: "destructive"
-            });
+            console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter" && !e.shiftKey && value.trim()) {
+        if (e.key === "Enter" && !e.shiftKey && value.trim() && !isLoading) {
             e.preventDefault();
             handleSendMessage();
         }
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto py-4 px-4">
-            {/* Messages Display */}
-            {messages.length > 0 && (
-                <div className="mb-4 space-y-4 max-h-[60vh] overflow-y-auto">
-                    {messages.map((msg, idx) => (
-                        <div
-                            key={idx}
-                            className={cn(
-                                "p-4 rounded-xl",
-                                msg.role === 'user' 
-                                    ? "bg-primary text-primary-foreground ml-12" 
-                                    : "bg-muted text-foreground mr-12"
-                            )}
-                        >
-                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        </div>
-                    ))}
-                    {isLoading && (
-                        <div className="p-4 rounded-xl bg-muted text-foreground mr-12">
-                            <p className="text-sm">Thinking...</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            <div className="bg-black/5 dark:bg-white/5 rounded-2xl p-1.5">
+        <div className="w-full max-w-4xl py-4">
+            <motion.div 
+                className="rounded-3xl p-1.5 backdrop-blur-xl"
+                style={{
+                    background: `linear-gradient(135deg, ${modeColor}15, ${modeColor}05)`,
+                    border: `1px solid ${modeColor}30`,
+                    boxShadow: `0 0 40px ${modeColor}20`
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
                 <div className="relative">
                     <div className="relative flex flex-col">
-                        <div
-                            className="overflow-y-auto"
-                            style={{ maxHeight: "400px" }}
-                        >
+                        <div className="overflow-y-auto" style={{ maxHeight: "400px" }}>
                             <Textarea
-                                id="ai-input-15"
+                                id="ai-input"
                                 value={value}
-                                placeholder={"What can I do for you?"}
+                                placeholder={`Ask ${mode} mode anything...`}
+                                disabled={isLoading}
                                 className={cn(
-                                    "w-full rounded-xl rounded-b-none px-4 py-3 bg-black/5 dark:bg-white/5 border-none dark:text-white placeholder:text-black/70 dark:placeholder:text-white/70 resize-none focus-visible:ring-0 focus-visible:ring-offset-0",
-                                    "min-h-[72px]"
+                                    "w-full rounded-2xl rounded-b-none px-6 py-4 bg-card/50 border-none text-foreground placeholder:text-muted-foreground/70 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 backdrop-blur-sm transition-all",
+                                    "min-h-[72px]",
+                                    isLoading && "opacity-50 cursor-not-allowed"
                                 )}
                                 ref={textareaRef}
                                 onKeyDown={handleKeyDown}
@@ -220,116 +190,105 @@ export function AI_Prompt() {
                                     setValue(e.target.value);
                                     adjustHeight();
                                 }}
-                                disabled={isLoading}
                             />
                         </div>
 
-                        <div className="h-14 bg-black/5 dark:bg-white/5 rounded-b-xl flex items-center">
-                            <div className="absolute left-3 right-3 bottom-3 flex items-center justify-between w-[calc(100%-24px)]">
-                                <div className="flex items-center gap-2">
+                        <div className="h-16 bg-card/30 backdrop-blur-sm rounded-b-2xl flex items-center">
+                            <div className="absolute left-4 right-4 bottom-4 flex items-center justify-between w-[calc(100%-32px)]">
+                                <div className="flex items-center gap-3">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button
                                                 variant="ghost"
-                                                className="flex items-center gap-1 h-8 pl-1 pr-2 text-xs rounded-md dark:text-white hover:bg-black/10 dark:hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-blue-500"
+                                                disabled={isLoading}
+                                                className="flex items-center gap-2 h-9 px-3 text-xs rounded-lg hover:bg-accent/50 transition-all"
+                                                style={{ color: modeColor }}
                                             >
                                                 <AnimatePresence mode="wait">
                                                     <motion.div
                                                         key={selectedModel}
-                                                        initial={{
-                                                            opacity: 0,
-                                                            y: -5,
-                                                        }}
-                                                        animate={{
-                                                            opacity: 1,
-                                                            y: 0,
-                                                        }}
-                                                        exit={{
-                                                            opacity: 0,
-                                                            y: 5,
-                                                        }}
-                                                        transition={{
-                                                            duration: 0.15,
-                                                        }}
-                                                        className="flex items-center gap-1"
+                                                        initial={{ opacity: 0, y: -5 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: 5 }}
+                                                        transition={{ duration: 0.15 }}
+                                                        className="flex items-center gap-2"
                                                     >
-                                                        {
-                                                            MODEL_ICONS[
-                                                                selectedModel
-                                                            ]
-                                                        }
-                                                        {selectedModel}
+                                                        {OPENAI_ICON}
+                                                        {AI_MODELS.find(m => m.id === selectedModel)?.name}
                                                         <ChevronDown className="w-3 h-3 opacity-50" />
                                                     </motion.div>
                                                 </AnimatePresence>
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent
-                                            className={cn(
-                                                "min-w-[10rem]",
-                                                "border-black/10 dark:border-white/10",
-                                                "bg-gradient-to-b from-white via-white to-neutral-100 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800"
-                                            )}
-                                        >
+                                        <DropdownMenuContent className="min-w-[12rem] bg-card/95 backdrop-blur-xl border-border/50">
                                             {AI_MODELS.map((model) => (
                                                 <DropdownMenuItem
-                                                    key={model}
-                                                    onSelect={() =>
-                                                        setSelectedModel(model)
-                                                    }
-                                                    className="flex items-center justify-between gap-2"
+                                                    key={model.id}
+                                                    onSelect={() => setSelectedModel(model.id)}
+                                                    className="flex items-center justify-between gap-2 cursor-pointer"
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        {MODEL_ICONS[model] || (
-                                                            <Bot className="w-4 h-4 opacity-50" />
-                                                        )}
-                                                        <span>{model}</span>
+                                                        {OPENAI_ICON}
+                                                        <span>{model.name}</span>
                                                     </div>
-                                                    {selectedModel ===
-                                                        model && (
-                                                        <Check className="w-4 h-4 text-blue-500" />
+                                                    {selectedModel === model.id && (
+                                                        <Check className="w-4 h-4" style={{ color: modeColor }} />
                                                     )}
                                                 </DropdownMenuItem>
                                             ))}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
-                                    <div className="h-4 w-px bg-black/10 dark:bg-white/10 mx-0.5" />
-                                    <label
-                                        className={cn(
-                                            "rounded-lg p-2 bg-black/5 dark:bg-white/5 cursor-pointer",
-                                            "hover:bg-black/10 dark:hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-blue-500",
-                                            "text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
-                                        )}
-                                        aria-label="Attach file"
-                                    >
-                                        <input type="file" className="hidden" />
-                                        <Paperclip className="w-4 h-4 transition-colors" />
-                                    </label>
                                 </div>
-                                <button
+                                <motion.button
                                     type="button"
-                                    className={cn(
-                                        "rounded-lg p-2 bg-black/5 dark:bg-white/5",
-                                        "hover:bg-black/10 dark:hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-blue-500"
-                                    )}
-                                    aria-label="Send message"
-                                    disabled={!value.trim() || isLoading}
                                     onClick={handleSendMessage}
+                                    disabled={!value.trim() || isLoading}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className={cn(
+                                        "rounded-xl p-3 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed",
+                                        "shadow-lg"
+                                    )}
+                                    style={{
+                                        backgroundColor: value.trim() && !isLoading ? `${modeColor}40` : 'hsl(var(--muted))',
+                                        boxShadow: value.trim() && !isLoading ? `0 0 20px ${modeColor}30` : 'none'
+                                    }}
+                                    aria-label="Send message"
                                 >
                                     <ArrowRight
-                                        className={cn(
-                                            "w-4 h-4 dark:text-white transition-opacity duration-200",
-                                            value.trim() && !isLoading
-                                                ? "opacity-100"
-                                                : "opacity-30"
-                                        )}
+                                        className={cn("w-5 h-5 transition-all duration-200")}
+                                        style={{ color: value.trim() && !isLoading ? modeColor : 'hsl(var(--muted-foreground))' }}
                                     />
-                                </button>
+                                </motion.button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
+            
+            {conversationHistory.length > 0 && (
+                <motion.div 
+                    className="mt-6 space-y-4 max-h-[400px] overflow-y-auto rounded-2xl p-4 bg-card/30 backdrop-blur-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                >
+                    {conversationHistory.map((msg, idx) => (
+                        <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: msg.role === 'user' ? 20 : -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className={cn(
+                                "p-4 rounded-xl",
+                                msg.role === 'user' 
+                                    ? 'bg-primary/10 ml-auto max-w-[80%]' 
+                                    : 'bg-accent/10 mr-auto max-w-[80%]'
+                            )}
+                        >
+                            <p className="text-sm text-foreground/90">{msg.content}</p>
+                        </motion.div>
+                    ))}
+                </motion.div>
+            )}
         </div>
     );
 }

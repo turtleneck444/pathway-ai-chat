@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
 
-    --primary: 0 0% 9%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 98%;
 
     --secondary: 0 0% 96%;
@@ -26,15 +26,15 @@ All colors MUST be HSL.
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 0 0% 9%;
+    --ring: 217 91% 60%;
 
     --neutral-900: 0 0% 9%;
     --neutral-800: 0 0% 15%;
@@ -42,7 +42,20 @@ All colors MUST be HSL.
     --neutral-500: 0 0% 60%;
     --neutral-400: 0 0% 70%;
 
-    --radius: 0.75rem;
+    /* Mode-specific accent colors */
+    --real-estate: 43 96% 56%;
+    --homework: 217 91% 60%;
+    --business: 142 76% 36%;
+    --image: 280 83% 48%;
+    --creative: 340 82% 52%;
+    --artist: 24 95% 53%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(280 83% 48%));
+    --gradient-accent: linear-gradient(135deg, hsl(142 76% 36%), hsl(43 96% 56%));
+    --glow-primary: 0 0 40px hsl(217 91% 60% / 0.4);
+    --glow-accent: 0 0 40px hsl(142 76% 36% / 0.4);
+
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 26%;
@@ -55,33 +68,33 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 0 0% 9%;
+    --background: 0 0% 4%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 12%;
+    --card: 0 0% 8%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 12%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
+    --muted: 0 0% 12%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 0 0% 15%;
+    --accent: 142 76% 36%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 84%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 217 91% 60%;
 
     --neutral-900: 0 0% 9%;
     --neutral-800: 0 0% 15%;
@@ -89,23 +102,35 @@ All colors MUST be HSL.
     --neutral-500: 0 0% 60%;
     --neutral-400: 0 0% 70%;
 
-    --sidebar-background: 0 0% 10%;
+    /* Mode-specific accent colors */
+    --real-estate: 43 96% 56%;
+    --homework: 217 91% 60%;
+    --business: 142 76% 36%;
+    --image: 280 83% 48%;
+    --creative: 340 82% 52%;
+    --artist: 24 95% 53%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(280 83% 48%));
+    --gradient-accent: linear-gradient(135deg, hsl(142 76% 36%), hsl(43 96% 56%));
+    --glow-primary: 0 0 40px hsl(217 91% 60% / 0.5);
+    --glow-accent: 0 0 40px hsl(142 76% 36% / 0.5);
+
+    --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 96%;
     --sidebar-primary: 0 0% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 0 0% 16%;
+    --sidebar-border: 0 0% 12%;
     --sidebar-ring: 0 0% 60%;
   }
-}
-
-@layer base {
+  
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
